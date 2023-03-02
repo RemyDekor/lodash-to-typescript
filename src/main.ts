@@ -12,15 +12,15 @@ const logLibrariesResults = ([loRes, reResJs, reResTs, rbRes]: [unknown, unknown
   console.log("rambda", rbRes);
 }
 
-
 const isUnexpectedValue = Math.random() > 0.5
 
 const createObj = () => ({
   strNullable: isUnexpectedValue ? null : 'something',
+  strAsConst: 'a_constant' as const,
   arrNumber: [1, 2, 3, 4],
   arrNullable: isUnexpectedValue ? null : [1, 2, 3, 4],
   arrRand: isUnexpectedValue ? ['a', 'b', 'c'] : [1, 2, 3, 4],
-  nested: { foo: { bar: isUnexpectedValue ? null : { thingy: [42] } } }
+  nested: { foo: { bar: isUnexpectedValue ? null : { thingy: [{value: 42}] } } }
 });
 
 const obj = createObj(); // null // use this "null" to see how different libs handle it (hint: zod might help us with libs other than lodash)
@@ -30,14 +30,22 @@ const loObj = _.clone(obj);
 const reObj = Re.clone(obj);
 const rbObj = Rb.clone(obj);
 
+const lodash_filter_value = _.filter(n => Boolean(n), loObj.strAsConst); // 🟠 no clue obj is not an array, and treats the object as an array (not explicit)
+console.warn('lodash_filter_value', lodash_filter_value)
 console.log('--------------- get a nullable ---------------');
 
+// TODO: check https://github.com/g-makarov/dot-path-value
 const vanillaRes = obj?.strNullable; // ✅ knows the type, as expected
+//    ^?
 console.log("vanilla 'get': ", vanillaRes);
-const loRes = _.get('strNullable')(loObj); // 🟠 does not know what type we are getting
-const reResJs = Re.pathOr(['strNullable'], undefined)(reObj); // 🟠 does not use 'null', and uses fallback value instead 🟠 not usable in TS 
-const reResTs = Re.pathOr(reObj, ['strNullable'], undefined); // 🟠 does not use 'null', and uses fallback value instead, stops screaming if fallback is an actual value (e.g. 'abc')
+const loRes = _.get('strNullable', loObj); // 🟠 does not know what type we are getting WHEN CURRIED (e.g. inside `flow`)
+//    ^?
+const reResJs = Re.pathOr(['strNullable'], undefined)(reObj); // 🟠 does not use 'null', and uses fallback value instead 🟠 + losing type
+//    ^?
+const reResTs = Re.pathOr(reObj, ['strNullable'], 'undefined'); // 🟠 does not use 'null', and uses fallback value instead, stops screaming if fallback is an actual value (e.g. 'abc')
+//    ^?
 const rbRes = Rb.path(['strNullable'])(rbObj); // 🟠 null becomes undefined
+//    ^?
 
 logLibrariesResults([loRes, reResJs, reResTs, rbRes])
 
@@ -75,7 +83,7 @@ console.log('--------------- flow/pipe ---------------');
 const isNumber = (x: any): x is number => typeof x === 'number';
 
 const loRandPipeRes = _.flow(_.get('arrRand'), _.filter(_.isNumber), _.filter(n => (n % 2 === 0)))(loObj);
-const reRandPipeResJs = Re.createPipe(Re.filter(Re.isNumber), Re.filter(n => (n % 2 === 0)), )(reObj?.arrRand);
+const reRandPipeResJs = Re.createPipe(Re.filter(Re.isNumber), Re.filter(n => (n % 2 === 0)))(reObj?.arrRand);
 const reRandPipeResTs1 = Re.pipe(reObj?.arrRand, Re.filter(Re.isNumber), Re.filter(n => (n % 2 === 0))); // not sure why TS is unhappy (something about output == never[])
 const reRandPipeResTs2 = Re.pipe(reObj?.arrRand, Re.filter(isNumber), Re.filter(n => (n % 2 === 0))); // not sure why using custom isNumber instead of Re.isNumber fixes it
 const rbRandPipeRes = Rb.pipe(Rb.filter(isNumber), Rb.filter(n => (n % 2 === 0)))(rbObj?.arrRand) // Rambda does not have isNumber
@@ -85,6 +93,8 @@ console.log("remeda data-last", reRandPipeResJs);
 console.log("remeda data-first 1", reRandPipeResTs1);
 console.log("remeda data-first 2", reRandPipeResTs2);
 console.log("rambda", rbRandPipeRes);
+
+
 
 // things to consider:
 // - behaviours around 'null' and undefined values
