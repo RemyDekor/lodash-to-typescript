@@ -1,5 +1,3 @@
-import './style.css'
-
 import _ from 'lodash/fp';
 import * as Re from 'remeda';
 import * as Rb from 'rambda'; // minimal alternative of ramda (more complete version => rambdax)

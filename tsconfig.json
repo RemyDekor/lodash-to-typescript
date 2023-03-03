@@ -10,7 +10,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "noEmit": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": false, // set to false for presentation purposes
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,

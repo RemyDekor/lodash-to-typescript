@@ -1,7 +1,7 @@
 import _ from 'lodash/fp';
 import * as Re from 'remeda';
 
-// ^?  The extension using this syntax to display the types is called "vscode-twoslash-queries"
+// ^?  The extension using this syntax to display the types from the line above is called "vscode-twoslash-queries"
 
 const isUnexpectedValue = Math.random() > 0.5;
 
@@ -85,7 +85,7 @@ const lodash_get_nested_in_nullable2 = _.get(['nested','foo','bar','thingy'], ob
 const vanilla_filter = obj.filter(n => Boolean(n)); // helpful error
 //    ^? 
 const lodash_filter = _.filter(n => Boolean(n), obj); // 🟠 treats the object as a collection (not explicit that it's not an array)
-//    ^? 😱
+//    ^?
 
 // 5️⃣🛑 set a property of an object to a value of unexpected type:
 
